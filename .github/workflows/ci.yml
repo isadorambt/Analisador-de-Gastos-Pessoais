@@ -71,3 +71,11 @@ jobs:
 
       - name: Rodar testes da análise em pandas
         run: python3 -m unittest tests.test_analysis -v
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rodar testes do tradutor de linguagem natural
+        run: node tests/test_nl2sql.js
