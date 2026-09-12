@@ -62,3 +62,6 @@ jobs:
           assert result == 'ok', f'Banco corrompido: {result}'
           print('gastos.db íntegro:', result)
           "
+
+      - name: Rodar testes automatizados (verifica os RESULTADOS, não só se roda)
+        run: python3 -m unittest tests.test_gastos -v
