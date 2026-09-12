@@ -339,6 +339,41 @@ FROM transacoes t
 JOIN categorias c ON t.categoria_id = c.id
 GROUP BY c.nome
 ORDER BY ticket_medio DESC;`
+  },
+  {
+    label: "🕒 Custo em horas de vida",
+    sql: `SELECT descricao, valor, horas_trabalho
+FROM gastos_em_horas
+ORDER BY horas_trabalho DESC
+LIMIT 10;`
+  },
+  {
+    label: "🔍 Assinaturas esquecidas",
+    sql: `WITH ordenado AS (
+    SELECT
+        descricao, data, valor,
+        LAG(data) OVER (PARTITION BY descricao ORDER BY data) AS data_anterior,
+        LAG(valor) OVER (PARTITION BY descricao ORDER BY data) AS valor_anterior
+    FROM transacoes
+),
+intervalos AS (
+    SELECT descricao, valor,
+        julianday(data) - julianday(data_anterior) AS dias_desde_ultima,
+        ABS(valor - valor_anterior) AS diferenca_valor
+    FROM ordenado
+    WHERE data_anterior IS NOT NULL
+)
+SELECT
+    descricao,
+    COUNT(*) + 1 AS ocorrencias,
+    ROUND(AVG(dias_desde_ultima), 1) AS intervalo_medio_dias,
+    ROUND(AVG(valor), 2) AS valor_medio_atual
+FROM intervalos
+WHERE dias_desde_ultima BETWEEN 25 AND 35
+  AND diferenca_valor < 10
+GROUP BY descricao
+HAVING COUNT(*) >= 2
+ORDER BY ocorrencias DESC;`
   }
 ];
 
