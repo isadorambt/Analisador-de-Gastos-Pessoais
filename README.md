@@ -66,6 +66,23 @@ erDiagram
 - 📊 **Relatórios agregados** — total e média por categoria, por conta, por período
 - 🔎 **Consultas prontas**, do básico (`SELECT`, `WHERE`) ao avançado (`JOIN`, `GROUP BY`)
 
+### 🕒 Custo em horas de vida
+
+Todo gasto é convertido em "quantas horas do seu trabalho ele custou", baseado
+na sua remuneração por hora. Um aluguel de R$ 1.200 deixa de ser só um número
+e passa a ser **26,7 horas de trabalho por mês** — uma forma de enxergar
+gastos que vem do clássico *Your Money or Your Life*. Implementado como uma
+`VIEW` (`gastos_em_horas`) que cruza a tabela de transações com o valor da
+sua hora, guardado em `perfil`.
+
+### 🔍 Detector de assinaturas esquecidas
+
+Uma consulta usa **window functions** (`LAG`) pra comparar cada transação com
+a anterior de mesma descrição, calculando o intervalo de dias e a diferença
+de valor entre elas. Cobranças com ~30 dias de intervalo e valor parecido são
+sinalizadas como possíveis assinaturas recorrentes — útil pra achar aquele
+streaming ou academia que você esqueceu que ainda paga.
+
 ## 🚀 Como usar
 
 ```bash
@@ -116,6 +133,8 @@ Rodando a consulta de total gasto por categoria:
 - [ ] Comparação de gasto mês a mês
 - [ ] View de resumo mensal
 - [ ] Gráficos com Python + matplotlib
+- [ ] Projeção de saldo (quando o dinheiro acaba, no ritmo atual)
+- [ ] Consulta em linguagem natural (perguntar em português, traduzir pra SQL)
 
 ---
 
