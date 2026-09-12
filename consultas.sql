@@ -71,3 +71,51 @@ SELECT descricao, valor, data
 FROM transacoes
 ORDER BY valor DESC
 LIMIT 3;
+
+-- ===============================================
+-- 10) CUSTO EM HORAS DE VIDA
+-- Converte cada gasto em quantas horas do seu trabalho ele custou.
+-- Usa a view gastos_em_horas (que cruza transacoes com o valor
+-- da sua hora, guardado na tabela perfil).
+-- ===============================================
+SELECT descricao, valor, horas_trabalho
+FROM gastos_em_horas
+ORDER BY horas_trabalho DESC
+LIMIT 10;
+
+-- ===============================================
+-- 11) DETECTOR DE ASSINATURAS ESQUECIDAS
+-- Usa uma WINDOW FUNCTION (LAG) pra comparar cada transação com a
+-- transação anterior de mesma descrição, calculando o intervalo de
+-- dias e a diferença de valor entre elas. Se o intervalo for
+-- consistentemente ~30 dias e o valor for parecido, é assinatura.
+-- ===============================================
+WITH ordenado AS (
+    SELECT
+        descricao,
+        data,
+        valor,
+        LAG(data) OVER (PARTITION BY descricao ORDER BY data) AS data_anterior,
+        LAG(valor) OVER (PARTITION BY descricao ORDER BY data) AS valor_anterior
+    FROM transacoes
+),
+intervalos AS (
+    SELECT
+        descricao,
+        valor,
+        julianday(data) - julianday(data_anterior) AS dias_desde_ultima,
+        ABS(valor - valor_anterior) AS diferenca_valor
+    FROM ordenado
+    WHERE data_anterior IS NOT NULL
+)
+SELECT
+    descricao,
+    COUNT(*) + 1 AS ocorrencias,
+    ROUND(AVG(dias_desde_ultima), 1) AS intervalo_medio_dias,
+    ROUND(AVG(valor), 2) AS valor_medio_atual
+FROM intervalos
+WHERE dias_desde_ultima BETWEEN 25 AND 35   -- aproximadamente mensal
+  AND diferenca_valor < 10                  -- valor parecido (tolera reajuste)
+GROUP BY descricao
+HAVING COUNT(*) >= 2                        -- pelo menos 3 ocorrências no total
+ORDER BY ocorrencias DESC;
