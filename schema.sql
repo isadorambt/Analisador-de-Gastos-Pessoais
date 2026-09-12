@@ -30,3 +30,22 @@ CREATE TABLE transacoes (
 -- Índices para consultas por data e categoria (comuns em relatórios)
 CREATE INDEX idx_transacoes_data ON transacoes(data);
 CREATE INDEX idx_transacoes_categoria ON transacoes(categoria_id);
+
+-- ===============================================
+-- Perfil: guarda o valor da sua hora de trabalho,
+-- usado pra converter gastos em "horas de vida"
+-- ===============================================
+CREATE TABLE perfil (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    valor_hora_trabalho REAL NOT NULL
+);
+
+-- View: cada transação também mostrada em horas de trabalho equivalentes
+CREATE VIEW gastos_em_horas AS
+SELECT
+    t.id,
+    t.data,
+    t.descricao,
+    t.valor,
+    ROUND(t.valor / p.valor_hora_trabalho, 2) AS horas_trabalho
+FROM transacoes t, perfil p;
