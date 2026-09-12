@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analisador de Gastos Pessoais — Playground SQL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #10151C;
+    --panel: #1A2029;
+    --panel-raised: #212934;
+    --line: #2B3440;
+    --paper: #EDE7DB;
+    --paper-dim: #9BA3AE;
+    --gold: #C9A15A;
+    --teal: #4FA394;
+    --danger: #C9695A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  header {
+    padding: 48px 32px 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    color: var(--gold);
+    font-size: 13px;
+    margin: 0 0 10px;
+  }
+
+  header h1 {
+    font-size: clamp(28px, 4vw, 42px);
+    margin: 0 0 12px;
+    color: var(--paper);
+  }
+
+  header p {
+    color: var(--paper-dim);
+    font-size: 15px;
+    max-width: 640px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  @media (min-width: 900px) {
+    main { grid-template-columns: 1.1fr 0.9fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    color: var(--paper);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h2::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .chip {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--paper-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .chip:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    padding: 14px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  .run-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  button.run {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  button.run:hover { box-shadow: 0 0 0 3px rgba(201,161,90,0.2); }
+  button.run:active { transform: scale(0.98); }
+  button.run:disabled { opacity: 0.5; cursor: wait; }
+
+  #status {
+    font-size: 12px;
+    color: var(--paper-dim);
+  }
+
+  #status.error { color: var(--danger); }
+  #status.ok { color: var(--teal); }
+
+  .results-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    color: var(--gold);
+    font-weight: 600;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(43,52,64,0.5);
+    color: var(--paper);
+    white-space: nowrap;
+  }
+
+  tr:hover td { background: rgba(201,161,90,0.05); }
+
+  .chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 90px;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+  }
+
+  .bar-label {
+    color: var(--paper-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bar-track {
+    background: var(--panel-raised);
+    border-radius: 3px;
+    height: 16px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .bar-value {
+    color: var(--paper);
+    text-align: right;
+  }
+
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 32px 48px;
+    color: var(--paper-dim);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  footer a { color: var(--gold); }
+
+  .empty-note {
+    color: var(--paper-dim);
+    font-size: 13px;
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  .nl-card {
+    grid-column: 1 / -1;
+  }
+
+  .nl-note {
+    color: var(--paper-dim);
+    font-size: 12.5px;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+
+  .nl-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  #nlInput {
+    flex: 1;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    padding: 10px 12px;
+  }
+
+  #nlInput:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  #nlFeedback {
+    margin-top: 10px;
+    font-size: 12.5px;
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">// analisador-de-gastos-pessoais</p>
+  <h1>Rode SQL de verdade, direto no navegador</h1>
+  <p>
+    Esse banco de gastos pessoais roda inteiro no seu navegador via WebAssembly —
+    sem servidor, sem back-end. Escreva uma consulta, ou escolha um exemplo
+    abaixo, e veja o resultado (e um gráfico, quando fizer sentido) na hora.
+  </p>
+</header>
+
+<main>
+  <section class="card nl-card">
+    <h2>💬 Pergunte em português</h2>
+    <p class="nl-note">
+      Isso <strong>não é um LLM</strong> — é um tradutor por padrões: reconhece
+      um conjunto fixo de formatos de pergunta e gera o SQL correspondente,
+      tudo rodando no navegador. Experimente uma sugestão ou escreva a sua.
+    </p>
+    <div class="chips" id="nlChips"></div>
+    <div class="nl-row">
+      <input type="text" id="nlInput" placeholder="Ex: quanto gastei com Alimentação?" spellcheck="false">
+      <button class="run" id="nlBtn">Perguntar →</button>
+    </div>
+    <div id="nlFeedback"></div>
+  </section>
+
+  <section class="card">
+    <h2>Editor SQL</h2>
+    <div class="chips" id="chips"></div>
+    <textarea id="query" spellcheck="false"></textarea>
+    <div class="run-row">
+      <button class="run" id="runBtn">Rodar consulta →</button>
+      <span id="status">carregando banco de dados…</span>
+    </div>
+    <div class="results-wrap" id="resultsWrap" style="display:none;">
+      <div id="resultsTable"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Visualização</h2>
+    <div id="chartArea">
+      <p class="empty-note">Rode uma consulta com duas colunas (rótulo + número) para ver o gráfico aqui.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Projeto de estudo em SQL por <a href="https://github.com/isadorambt" target="_blank">@isadorambt</a> —
+  motor SQL via <a href="https://sql.js.org/" target="_blank">sql.js</a> (SQLite compilado para WebAssembly)
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script src="nl2sql.js"></script>
+<script>
+const EXAMPLES = [
+  {
+    label: "Total por categoria",
+    sql: `SELECT c.nome AS categoria, SUM(t.valor) AS total, COUNT(*) AS transacoes
+FROM transacoes t
+JOIN categorias c ON t.categoria_id = c.id
+GROUP BY c.nome
+ORDER BY total DESC;`
+  },
+  {
+    label: "Top 5 maiores gastos",
+    sql: `SELECT descricao, valor, data
+FROM transacoes
+ORDER BY valor DESC
+LIMIT 5;`
+  },
+  {
+    label: "Gasto por conta",
+    sql: `SELECT ct.nome AS conta, SUM(t.valor) AS total
+FROM transacoes t
+JOIN contas ct ON t.conta_id = ct.id
+GROUP BY ct.nome
+ORDER BY total DESC;`
+  },
+  {
+    label: "Ticket médio por categoria",
+    sql: `SELECT c.nome AS categoria, ROUND(AVG(t.valor), 2) AS ticket_medio
+FROM transacoes t
+JOIN categorias c ON t.categoria_id = c.id
+GROUP BY c.nome
+ORDER BY ticket_medio DESC;`
+  },
+  {
+    label: "🕒 Custo em horas de vida",
+    sql: `SELECT descricao, valor, horas_trabalho
+FROM gastos_em_horas
+ORDER BY horas_trabalho DESC
+LIMIT 10;`
+  },
+  {
+    label: "🔍 Assinaturas esquecidas",
+    sql: `WITH ordenado AS (
+    SELECT
+        descricao, data, valor,
+        LAG(data) OVER (PARTITION BY descricao ORDER BY data) AS data_anterior,
+        LAG(valor) OVER (PARTITION BY descricao ORDER BY data) AS valor_anterior
+    FROM transacoes
+),
+intervalos AS (
+    SELECT descricao, valor,
+        julianday(data) - julianday(data_anterior) AS dias_desde_ultima,
+        ABS(valor - valor_anterior) AS diferenca_valor
+    FROM ordenado
+    WHERE data_anterior IS NOT NULL
+)
+SELECT
+    descricao,
+    COUNT(*) + 1 AS ocorrencias,
+    ROUND(AVG(dias_desde_ultima), 1) AS intervalo_medio_dias,
+    ROUND(AVG(valor), 2) AS valor_medio_atual
+FROM intervalos
+WHERE dias_desde_ultima BETWEEN 25 AND 35
+  AND diferenca_valor < 10
+GROUP BY descricao
+HAVING COUNT(*) >= 2
+ORDER BY ocorrencias DESC;`
+  }
+];
+
+const statusEl = document.getElementById('status');
+const runBtn = document.getElementById('runBtn');
+const queryEl = document.getElementById('query');
+const resultsWrap = document.getElementById('resultsWrap');
+const resultsTable = document.getElementById('resultsTable');
+const chartArea = document.getElementById('chartArea');
+const chipsEl = document.getElementById('chips');
+
+let db = null;
+
+EXAMPLES.forEach(ex => {
+  const chip = document.createElement('button');
+  chip.className = 'chip';
+  chip.textContent = ex.label;
+  chip.onclick = () => { queryEl.value = ex.sql; runQuery(); };
+  chipsEl.appendChild(chip);
+});
+
+queryEl.value = EXAMPLES[0].sql;
+
+async function init() {
+  try {
+    const SQL = await initSqlJs({
+      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${file}`
+    });
+    const buf = await fetch('gastos.db').then(r => {
+      if (!r.ok) throw new Error('gastos.db não encontrado no repositório');
+      return r.arrayBuffer();
+    });
+    db = new SQL.Database(new Uint8Array(buf));
+    statusEl.textContent = 'banco carregado — pronto pra rodar consultas';
+    statusEl.className = 'ok';
+    runBtn.disabled = false;
+    runQuery();
+  } catch (err) {
+    statusEl.textContent = 'erro ao carregar: ' + err.message;
+    statusEl.className = 'error';
+  }
+}
+
+function runQuery() {
+  if (!db) return;
+  const sql = queryEl.value.trim();
+  if (!sql) return;
+  try {
+    const res = db.exec(sql);
+    statusEl.textContent = 'consulta executada com sucesso';
+    statusEl.className = 'ok';
+    renderResults(res);
+  } catch (err) {
+    statusEl.textContent = 'erro de SQL: ' + err.message;
+    statusEl.className = 'error';
+    resultsWrap.style.display = 'none';
+    chartArea.innerHTML = '<p class="empty-note">—</p>';
+  }
+}
+
+function renderResults(res) {
+  if (!res.length) {
+    resultsWrap.style.display = 'none';
+    chartArea.innerHTML = '<p class="empty-note">A consulta não retornou linhas.</p>';
+    return;
+  }
+  const { columns, values } = res[0];
+
+  let html = '<table><thead><tr>';
+  columns.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr></thead><tbody>';
+  values.forEach(row => {
+    html += '<tr>' + row.map(v => `<td>${v === null ? '—' : v}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody></table>';
+  resultsTable.innerHTML = html;
+  resultsWrap.style.display = 'block';
+
+  renderChart(columns, values);
+}
+
+function renderChart(columns, values) {
+  const isNumeric = v => typeof v === 'number';
+  if (columns.length === 2 && values.length && isNumeric(values[0][1])) {
+    const max = Math.max(...values.map(r => r[1]));
+    let html = '<div class="chart-bars">';
+    values.forEach(row => {
+      const pct = max > 0 ? (row[1] / max) * 100 : 0;
+      html += `
+        <div class="bar-row">
+          <div class="bar-label">${row[0]}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+          <div class="bar-value">${typeof row[1] === 'number' ? row[1].toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : row[1]}</div>
+        </div>`;
+    });
+    html += '</div>';
+    chartArea.innerHTML = html;
+  } else {
+    chartArea.innerHTML = '<p class="empty-note">Rode uma consulta com duas colunas (rótulo + número) para ver o gráfico aqui.</p>';
+  }
+}
+
+runBtn.addEventListener('click', runQuery);
+runBtn.disabled = true;
+init();
+
+// --- Pergunte em português ---
+const NL_EXAMPLES = [
+  "Quanto gastei com Alimentação?",
+  "Quais são minhas assinaturas?",
+  "Qual foi meu maior gasto?",
+  "Quanto gastei em agosto?",
+  "Quanto gastei no total?",
+];
+
+const nlChips = document.getElementById('nlChips');
+const nlInput = document.getElementById('nlInput');
+const nlFeedback = document.getElementById('nlFeedback');
+
+NL_EXAMPLES.forEach(exemplo => {
+  const chip = document.createElement('button');
+  chip.className = 'chip';
+  chip.textContent = exemplo;
+  chip.onclick = () => { nlInput.value = exemplo; perguntarEmPortugues(); };
+  nlChips.appendChild(chip);
+});
+
+function perguntarEmPortugues() {
+  const pergunta = nlInput.value.trim();
+  if (!pergunta) return;
+
+  const resultado = traduzirPergunta(pergunta);
+  if (!resultado) {
+    nlFeedback.textContent = 'Não reconheci essa pergunta. Tente uma das sugestões acima, ou pergunte sobre: uma categoria, um mês (junho a setembro), assinaturas, o maior gasto, ou o total geral.';
+    nlFeedback.style.color = 'var(--danger)';
+    return;
+  }
+
+  nlFeedback.textContent = 'Entendi como: ' + resultado.explicacao + ' — rodando a consulta abaixo ↓';
+  nlFeedback.style.color = 'var(--teal)';
+  queryEl.value = resultado.sql;
+  runQuery();
+}
+
+document.getElementById('nlBtn').addEventListener('click', perguntarEmPortugues);
+nlInput.addEventListener('keydown', e => { if (e.key === 'Enter') perguntarEmPortugues(); });
+</script>
+</body>
+</html>
