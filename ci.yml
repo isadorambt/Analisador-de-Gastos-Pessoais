@@ -1,0 +1,64 @@
+name: Validar banco de dados
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-sql:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Criar banco e rodar schema + seed
+        run: |
+          python3 -c "
+          import sqlite3
+          conn = sqlite3.connect(':memory:')
+          cur = conn.cursor()
+          with open('schema.sql') as f:
+              cur.executescript(f.read())
+          with open('seed.sql') as f:
+              cur.executescript(f.read())
+          conn.commit()
+          print('schema.sql e seed.sql executados sem erros')
+          "
+
+      - name: Validar consultas de exemplo
+        run: |
+          python3 -c "
+          import sqlite3
+          conn = sqlite3.connect(':memory:')
+          cur = conn.cursor()
+          with open('schema.sql') as f:
+              cur.executescript(f.read())
+          with open('seed.sql') as f:
+              cur.executescript(f.read())
+          conn.commit()
+          with open('consultas.sql') as f:
+              sql = f.read()
+          # Executa cada statement separado por ';' individualmente
+          for stmt in [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]:
+              cur.execute(stmt)
+          print('Todas as consultas em consultas.sql rodaram sem erros')
+          "
+
+      - name: Checar integridade do gastos.db versionado
+        run: |
+          python3 -c "
+          import sqlite3
+          conn = sqlite3.connect('gastos.db')
+          cur = conn.cursor()
+          cur.execute('PRAGMA integrity_check;')
+          result = cur.fetchone()[0]
+          assert result == 'ok', f'Banco corrompido: {result}'
+          print('gastos.db íntegro:', result)
+          "
