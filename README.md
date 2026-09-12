@@ -6,6 +6,7 @@
 
 ![SQL](https://img.shields.io/badge/SQL-4479A1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![CI](https://img.shields.io/github/actions/workflow/status/isadorambt/Analisador-de-Gastos-Pessoais/ci.yml?style=for-the-badge&label=build)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
@@ -112,6 +113,18 @@ sqlite3 gastos.db < consultas.sql
 > 💡 Não tem o `sqlite3` instalado? O módulo `sqlite3` do Python já vem
 > embutido — dá pra rodar os mesmos scripts com `python3` também.
 
+### Rodando a análise em Python (pandas)
+
+```bash
+pip install -r requirements.txt
+
+# gerar os gráficos em analise/graficos/
+python3 analise/gerar_graficos.py
+
+# abrir o notebook completo (Jupyter ou VS Code)
+jupyter notebook analise/analise_gastos.ipynb
+```
+
 ## 📁 Estrutura do projeto
 
 | Arquivo         | Descrição                                        |
@@ -121,29 +134,49 @@ sqlite3 gastos.db < consultas.sql
 | `consultas.sql` | Consultas de exemplo, do básico ao avançado        |
 | `gastos.db`     | Banco de dados SQLite já pronto para uso           |
 | `index.html`    | Playground SQL interativo (roda no navegador)      |
-| `.github/workflows/ci.yml` | CI que valida o SQL a cada commit       |
-| `tests/test_gastos.py` | Testes automatizados dos resultados das consultas |
+| `.github/workflows/ci.yml` | CI que valida o SQL e a análise em pandas a cada commit |
+| `tests/test_gastos.py` | Testes automatizados dos resultados das consultas SQL |
+| `analise/analysis.py` | Módulo pandas com as mesmas análises, em Python |
+| `analise/gerar_graficos.py` | Gera os gráficos (matplotlib + seaborn) |
+| `analise/analise_gastos.ipynb` | Notebook Jupyter com a análise completa, já executado |
+| `tests/test_analysis.py` | Testes que comparam pandas contra SQL, resultado a resultado |
 
 ## 📊 Exemplo de resultado
 
-Rodando a consulta de total gasto por categoria:
+Rodando a consulta de total gasto por categoria (com o histórico de 4 meses):
 
 | Categoria     | Total (R$) | Transações |
 |---------------|-----------:|:----------:|
+| Alimentação   |   1.413,85 |     6      |
 | Moradia       |   1.345,00 |     2      |
-| Alimentação   |     588,45 |     3      |
-| Lazer         |     225,00 |     2      |
+| Saúde         |     606,30 |     6      |
+| Lazer         |     267,00 |     3      |
+| Assinaturas   |     252,20 |     8      |
 | Educação      |     205,00 |     2      |
-| Transporte    |     138,50 |     2      |
-| Saúde         |      67,90 |     1      |
+| Transporte    |     160,50 |     3      |
+
+## 🐍 Análise em Python (pandas)
+
+Além do SQL, o projeto tem um módulo equivalente em **pandas**
+(`analise/analysis.py`) que resolve as mesmas perguntas — total por
+categoria, custo em horas, detector de assinaturas, projeção de saldo —
+usando Python em vez de SQL puro. Os testes em `tests/test_analysis.py`
+comparam os dois caminhos e confirmam que os resultados batem.
+
+O notebook `analise/analise_gastos.ipynb` já vem executado, com as
+tabelas e os gráficos abaixo:
+
+![Total por categoria](analise/graficos/total_por_categoria.png)
+![Gasto mensal](analise/graficos/gasto_mensal.png)
+![Assinaturas detectadas](analise/graficos/assinaturas.png)
 
 ## 🗺️ Roadmap
 
 - [ ] Tabela de orçamento (limite por categoria) com alerta de estouro
 - [ ] Comparação de gasto mês a mês
 - [ ] View de resumo mensal
-- [ ] Gráficos com Python + matplotlib
-- [ ] Projeção de saldo (quando o dinheiro acaba, no ritmo atual)
+- [x] Gráficos com Python + matplotlib
+- [x] Projeção de saldo (quando o dinheiro acaba, no ritmo atual)
 - [ ] Consulta em linguagem natural (perguntar em português, traduzir pra SQL)
 
 ---
