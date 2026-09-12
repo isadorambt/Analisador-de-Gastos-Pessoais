@@ -18,6 +18,20 @@ Registre seus gastos, organize por categoria e conta, e descubra pra onde<br>seu
 
 ---
 
+## 💬 Pergunte em português
+
+O playground tem uma caixa onde você digita uma pergunta em português —
+"quanto gastei com Alimentação?", "quais são minhas assinaturas?" — e ela é
+traduzida pra SQL e executada na hora.
+
+**Importante ser honesta sobre o que isso é:** não é um LLM (não existe API
+de IA rodando por trás). É um **tradutor por padrões**, implementado em
+`nl2sql.js` — normaliza o texto (remove acentos, minúsculas), reconhece um
+conjunto fixo de formatos de pergunta com expressões regulares, e monta o
+SQL correspondente. Funciona 100% no navegador, sem servidor e sem custo,
+mas só entende as perguntas que ele foi programado pra reconhecer.
+Testado em `tests/test_nl2sql.js` (roda com Node, sem dependências).
+
 ## 🌐 Playground SQL ao vivo
 
 Esse repositório inclui uma página (`index.html`) que roda o banco **inteiro
@@ -135,6 +149,8 @@ jupyter notebook analise/analise_gastos.ipynb
 | `gastos.db`     | Banco de dados SQLite já pronto para uso           |
 | `index.html`    | Playground SQL interativo (roda no navegador)      |
 | `.github/workflows/ci.yml` | CI que valida o SQL e a análise em pandas a cada commit |
+| `nl2sql.js` | Tradutor de perguntas em português para SQL (por padrões) |
+| `tests/test_nl2sql.js` | Testes do tradutor, em Node.js |
 | `tests/test_gastos.py` | Testes automatizados dos resultados das consultas SQL |
 | `analise/analysis.py` | Módulo pandas com as mesmas análises, em Python |
 | `analise/gerar_graficos.py` | Gera os gráficos (matplotlib + seaborn) |
@@ -177,7 +193,7 @@ tabelas e os gráficos abaixo:
 - [ ] View de resumo mensal
 - [x] Gráficos com Python + matplotlib
 - [x] Projeção de saldo (quando o dinheiro acaba, no ritmo atual)
-- [ ] Consulta em linguagem natural (perguntar em português, traduzir pra SQL)
+- [x] Consulta em linguagem natural (perguntar em português, traduzir pra SQL)
 
 ---
 
