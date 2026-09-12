@@ -83,6 +83,15 @@ de valor entre elas. Cobranças com ~30 dias de intervalo e valor parecido são
 sinalizadas como possíveis assinaturas recorrentes — útil pra achar aquele
 streaming ou academia que você esqueceu que ainda paga.
 
+### ✅ Testes automatizados
+
+O CI não só confere se o SQL roda sem erro — ele também valida se os
+**resultados** estão matematicamente corretos: a soma dos totais por
+categoria bate com o total geral, o detector de assinaturas encontra
+exatamente as recorrências esperadas (nem mais, nem menos), o cálculo de
+horas de trabalho bate com o valor da hora cadastrado, e não existem
+transações "órfãs" apontando pra categorias ou contas inexistentes.
+
 ## 🚀 Como usar
 
 ```bash
@@ -113,6 +122,7 @@ sqlite3 gastos.db < consultas.sql
 | `gastos.db`     | Banco de dados SQLite já pronto para uso           |
 | `index.html`    | Playground SQL interativo (roda no navegador)      |
 | `.github/workflows/ci.yml` | CI que valida o SQL a cada commit       |
+| `tests/test_gastos.py` | Testes automatizados dos resultados das consultas |
 
 ## 📊 Exemplo de resultado
 
